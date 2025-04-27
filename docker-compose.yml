@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 services:
   zookeeper:
     image: zookeeper:latest
@@ -34,3 +34,4 @@ services:
       - kafka
     environment:
       - PORT=3000
+      - KAFKA_BROKER=kafka:9092
