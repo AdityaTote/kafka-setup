@@ -1,5 +1,5 @@
 import { Producer } from "kafkajs";
-import { kafka } from "./cliennt";
+import { kafka } from "./client";
 import { IEventMessage, ITopicMessages } from "./types";
 
 export class EventProducer {

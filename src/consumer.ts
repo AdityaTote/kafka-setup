@@ -1,6 +1,6 @@
 import { Consumer } from "kafkajs";
-import { kafka } from "./cliennt";
-import { IEventMessage } from "./types";
+import { kafka } from "./client";
+import { IEventMessage, ITopicMessages } from "./types";
 
 export class EventConsumer {
   private consumer: Consumer;
@@ -79,5 +79,48 @@ export class EventConsumer {
       console.error("Error running consumer: ", error);
       throw error;
     }
+  }
+
+  public async reciveBatch(
+    topic: string,
+    onMessage: (message: ITopicMessages) => void | Promise<void>
+  ) {
+    if (!this.connected) {
+      await this.connect();
+    }
+    if (!this.isSubscribed) {
+      await this.subscribe(topic);
+    }
+    await this.consumer.run({
+      eachBatch: async ({
+        batch,
+        resolveOffset,
+        heartbeat,
+        commitOffsetsIfNecessary,
+        uncommittedOffsets,
+        isRunning,
+        isStale,
+        pause,
+      }) => {
+        const messages: ITopicMessages = {
+          topic: batch.topic,
+          messages: batch.messages.map((message) => {
+            const convertedHeaders: Record<string, string> = {};
+            if (message.headers) {
+              Object.entries(message.headers).forEach(([key, value]) => {
+                convertedHeaders[key] = value?.toString() || "";
+              });
+            }
+            return {
+              key: message.key?.toString() || "",
+              value: message.value?.toString() || "",
+              partition: batch.partition,
+              headers: convertedHeaders,
+            };
+          }),
+        };
+        await Promise.resolve(onMessage(messages));
+      },
+    });
   }
 }

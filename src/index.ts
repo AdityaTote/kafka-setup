@@ -1,11 +1,10 @@
 import express from "express";
 import { EventProducer } from "./producer";
 import { EventConsumer } from "./consumer";
-import { IEventMessage } from "./types";
+import { IEventMessage, ITopicMessages } from "./types";
+import { PORT } from "./constants";
 
 const app = express();
-
-const port = process.env.PORT || 3030;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -14,7 +13,7 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-app.post("/produce", async (req, res) => {
+app.post("/produce/messgae", async (req, res) => {
   const input: IEventMessage[] = req.body;
   /*
   payload: {
@@ -40,7 +39,36 @@ app.post("/produce", async (req, res) => {
   }
 });
 
-app.get("/consume", async (req, res) => {
+app.post("/produce/batch", async (req, res) => {
+  const input: ITopicMessages[] = req.body;
+  /*
+  payload: {
+  topic: string;
+  messages: [{
+    key: string;
+    value: string;
+    partition?: number;
+    headers?: Record<string, string>
+  }]
+  }
+*/
+  try {
+    await new EventProducer().sendBatch(input);
+    res.status(200).json({
+      message: "Batch message sent successfully",
+    });
+    return;
+  } catch (error) {
+    console.error("Error producing batch message: ", error);
+    res.status(500).json({
+      message: "Error producing batch message",
+      error: error,
+    });
+    return;
+  }
+});
+
+app.get("/consume/messages", async (req, res) => {
   const messages: IEventMessage[] = [];
   try {
     await new EventConsumer().messageHandler(
@@ -69,6 +97,31 @@ app.get("/consume", async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.get("/consume/batch", async (req, res) => {
+  const messages: ITopicMessages[] = [];
+  try {
+    await new EventConsumer().reciveBatch("resources-avability", (message) => {
+      messages.push(message);
+      console.log("Batch message received:", {
+        topic: message.topic,
+        messages: message.messages,
+      });
+    });
+    res.status(200).json({
+      message: "Batch message consumed successfully",
+      data: messages,
+    });
+    return;
+  } catch (error) {
+    console.error("Error consuming batch message: ", error);
+    res.status(500).json({
+      message: "Error consuming batch message",
+      error: error,
+    });
+    return;
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
