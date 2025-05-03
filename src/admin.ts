@@ -8,7 +8,7 @@ run this file using the command below:
 ts-node src/admin.ts
 */
 
-async function init() {
+export async function init() {
   const admin = kafka.admin();
   console.log("Admin connecting...");
   admin.connect();
@@ -31,5 +31,3 @@ async function init() {
     console.log(error);
   }
 }
-
-init();

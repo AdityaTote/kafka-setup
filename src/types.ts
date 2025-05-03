@@ -1,6 +1,6 @@
 export interface IEventMessage {
   key: string;
-  value: string;
+  value: string | Buffer;
   partition?: number;
   headers?: Record<string, string>;
 }

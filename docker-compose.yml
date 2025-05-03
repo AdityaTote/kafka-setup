@@ -8,7 +8,6 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
-
   kafka:
     image: confluentinc/cp-kafka:latest
     container_name: kafka
@@ -24,14 +23,3 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
-
-  kafka-app:
-    build:
-      context: .
-      dockerfile: DockerFile
-    container_name: kafka-app
-    depends_on:
-      - kafka
-    environment:
-      - PORT=3000
-      - KAFKA_BROKER=kafka:9092

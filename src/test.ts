@@ -15,7 +15,7 @@ async function produceMessage() {
     {
       key: "key2",
       value: "value2",
-      partition: 1,
+      partition: 0,
       headers: {
         header2: "headerValue2",
       },
@@ -23,7 +23,7 @@ async function produceMessage() {
     {
       key: "key3",
       value: "value3",
-      partition: 2,
+      partition: 0,
       headers: {
         header3: "headerValue3",
       },
@@ -31,7 +31,7 @@ async function produceMessage() {
     {
       key: "key4",
       value: "value4",
-      partition: 2,
+      partition: 0,
       headers: {
         header4: "headerValue4",
       },
@@ -39,7 +39,7 @@ async function produceMessage() {
     {
       key: "key5",
       value: "value5",
-      partition: 1,
+      partition: 0,
       headers: {
         header5: "headerValue5",
       },
@@ -51,7 +51,7 @@ async function produceMessage() {
     message
   );
 
-  console.log("Message sent successfully", producer);
+  console.log("Message sent successfully");
 }
 
 produceMessage()
@@ -60,25 +60,4 @@ produceMessage()
   })
   .catch((error) => {
     console.error("Error producing message: ", error);
-  });
-
-const consumer = async () => {
-  const consumer = await new EventConsumer().messageHandler(
-    "resources-avability",
-    (message) => {
-      console.log("Message received:", {
-        key: message.key,
-        value: message.value,
-        headers: message.headers,
-      });
-    }
-  );
-};
-
-consumer()
-  .then(() => {
-    console.log("Message consumed successfully");
-  })
-  .catch((error) => {
-    console.error("Error consuming message: ", error);
   });

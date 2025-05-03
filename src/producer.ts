@@ -8,16 +8,19 @@ export class EventProducer {
 
   constructor() {
     this.producer = kafka.producer({
-      allowAutoTopicCreation: false,
       transactionTimeout: 30000,
     });
   }
 
-  private async connect(): Promise<void> {
+  /**
+   * Connect to Kafka broker
+   */
+  public async connect(): Promise<void> {
     if (!this.connected) {
       try {
         await this.producer.connect();
         this.connected = true;
+        console.log("Producer connected successfully");
       } catch (error) {
         console.error("Error connecting producer: ", error);
         throw error;
@@ -25,11 +28,15 @@ export class EventProducer {
     }
   }
 
-  private async disconnect(): Promise<void> {
+  /**
+   * Disconnect from Kafka broker
+   */
+  public async disconnect(): Promise<void> {
     if (this.connected) {
       try {
         await this.producer.disconnect();
         this.connected = false;
+        console.log("Producer disconnected");
       } catch (error) {
         console.error("Error disconnecting producer: ", error);
         throw error;
@@ -37,32 +44,60 @@ export class EventProducer {
     }
   }
 
+  /**
+   * Send a single message or array of messages to a topic
+   */
   public async sendMessage(
     topic: string,
-    messages: IEventMessage[]
+    messages: IEventMessage | IEventMessage[]
   ): Promise<void> {
     try {
       if (!this.connected) {
         await this.connect();
       }
+
+      const messageArray = Array.isArray(messages) ? messages : [messages];
+
+      const formattedMessages = messageArray.map((msg) => ({
+        ...msg,
+        value:
+          typeof msg.value === "object" && !(msg.value instanceof Buffer)
+            ? JSON.stringify(msg.value)
+            : msg.value,
+      }));
+
       await this.producer.send({
         topic,
-        messages,
+        messages: formattedMessages,
       });
-      await this.disconnect();
     } catch (error) {
       console.error("Error sending message: ", error);
       throw error;
     }
   }
 
+  /**
+   * Send batch of messages to multiple topics
+   */
   public async sendBatch(topicMessages: ITopicMessages[]): Promise<void> {
     try {
       if (!this.connected) {
         await this.connect();
       }
+
+      const formattedBatch = topicMessages.map((tm) => ({
+        topic: tm.topic,
+        messages: tm.messages.map((msg) => ({
+          ...msg,
+          value:
+            typeof msg.value === "object" && !(msg.value instanceof Buffer)
+              ? JSON.stringify(msg.value)
+              : msg.value,
+        })),
+      }));
+
       await this.producer.sendBatch({
-        topicMessages,
+        topicMessages: formattedBatch,
       });
     } catch (error) {
       console.error("Error sending batch message: ", error);
